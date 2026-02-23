@@ -387,6 +387,22 @@
   </div>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="stats.js"></script>
   <script>
+    // Handle Supabase email confirmation redirect (token in URL hash)
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      const sb = supabase.createClient(
+        'https://uhzyfukvbodiofvcistr.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenlmdWt2Ym9kaW9mdmNpc3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDM3OTUsImV4cCI6MjA4NzM3OTc5NX0.o3IAwdbk-aSZb-kJvSTmHK1H3lsRT4GI-O2jZbZRvPA'
+      );
+      // Supabase automatically picks up the token from the hash
+      sb.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          // Clean the URL so it looks normal
+          history.replaceState(null, '', window.location.pathname);
+        }
+      });
+    }
+
     setTimeout(() => {
       const user = Stats.getUser();
       const nav = document.getElementById('account-nav');
@@ -396,7 +412,7 @@
       } else {
         nav.innerHTML = `<a href="auth.html" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);border:1px solid var(--border);padding:6px 14px;border-radius:2px;text-decoration:none;text-transform:uppercase;">Sign In</a>`;
       }
-    }, 400);
+    }, 600);
   </script>
 </body>
 </html>
