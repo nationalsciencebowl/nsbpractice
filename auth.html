@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In – Science Bowl Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0d1b2a; --surface: #1b263b91; --surface2: #162535;
+      --border: #415a7793; --accent: #778da9; --accent2: #4e8098;
+      --text: #e8f0fe; --muted: #e0e1dd; --green: #00ff88; --red: #ff4d6d;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px; opacity: 0.4; z-index: 0; pointer-events: none;
+    }
+    body::after {
+      content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(34,131,110,0.15) 0%, transparent 50%),
+                  radial-gradient(ellipse at 30% 70%, rgba(194,113,37,0.10) 0%, transparent 60%);
+      z-index: 0; pointer-events: none;
+    }
+    .card {
+      position: relative; z-index: 1;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 48px 40px; width: 100%; max-width: 420px;
+      margin: 24px;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px; letter-spacing: 3px; color: var(--text);
+      text-align: center; margin-bottom: 4px;
+    }
+    .logo span { color: var(--accent); }
+    .tagline {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      letter-spacing: 2px; color: var(--muted); text-align: center;
+      margin-bottom: 36px; text-transform: uppercase;
+    }
+    .tab-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0; margin-bottom: 28px;
+      border: 1px solid var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .tab-btn {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      letter-spacing: 2px; text-transform: uppercase;
+      padding: 10px; background: transparent; border: none;
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--accent2); color: white; }
+    .field { margin-bottom: 16px; }
+    .field label {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      display: block; margin-bottom: 8px;
+    }
+    .field input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 3px; padding: 12px 14px; color: var(--text);
+      font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .submit-btn {
+      width: 100%; font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 3px; padding: 14px;
+      border-radius: 3px; border: none; background: var(--accent2);
+      color: white; cursor: pointer; margin-top: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+    .msg {
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+      text-align: center; margin-top: 16px; min-height: 18px;
+      padding: 10px; border-radius: 3px; display: none;
+    }
+    .msg.error { display: block; color: var(--red); background: rgba(255,77,109,0.08); border: 1px solid var(--red); }
+    .msg.success { display: block; color: var(--green); background: rgba(0,255,136,0.08); border: 1px solid var(--green); }
+    .divider {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      color: var(--muted); text-align: center; margin: 20px 0;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .back-link {
+      display: block; text-align: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      color: var(--muted); text-decoration: none; margin-top: 20px;
+      letter-spacing: 1px; transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">SCIENCE<span>BOWL</span></div>
+  <div class="tagline">Sign in to sync your stats across devices</div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">SIGN IN</button>
+    <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">SIGN UP</button>
+  </div>
+
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+  </div>
+
+  <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">SIGN IN</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="divider">or</div>
+  <a href="index.html" class="back-link">← Continue without account</a>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://uhzyfukvbodiofvcistr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenlmdWt2Ym9kaW9mdmNpc3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDM3OTUsImV4cCI6MjA4NzM3OTc5NX0.o3IAwdbk-aSZb-kJvSTmHK1H3lsRT4GI-O2jZbZRvPA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let mode = 'login';
+
+// Redirect if already logged in
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) location.href = 'index.html';
+});
+
+function switchTab(newMode) {
+  mode = newMode;
+  document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+  document.getElementById('submit-btn').textContent = mode === 'login' ? 'SIGN IN' : 'CREATE ACCOUNT';
+  document.getElementById('password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+  showMsg('', '');
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg' + (type ? ` ${type}` : '');
+}
+
+async function handleSubmit() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('submit-btn');
+
+  if (!email || !password) { showMsg('Please fill in all fields.', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'LOADING...';
+
+  if (mode === 'login') {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      showMsg(error.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'SIGN IN';
+    } else {
+      showMsg('Signed in! Redirecting...', 'success');
+      setTimeout(() => location.href = 'index.html', 800);
+    }
+  } else {
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) {
+      showMsg(error.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'CREATE ACCOUNT';
+    } else {
+      showMsg('Account created! Check your email to confirm, then sign in.', 'success');
+      btn.disabled = false;
+      btn.textContent = 'CREATE ACCOUNT';
+    }
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSubmit();
+});
+</script>
+</body>
+</html>
