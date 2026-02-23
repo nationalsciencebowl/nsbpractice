@@ -85,6 +85,11 @@ window.logout = async function () {
 
   currentUser = null;
   localStorage.removeItem("nsb_stats");
+
+  // Wait 2 seconds before letting onAuthStateChange update
+  setTimeout(() => {
+    if (el) el.textContent = "Not logged in";
+  }, 2000);
 };
 sb.auth.onAuthStateChange((_event, session) => {
   const el = document.getElementById("accountStatus");
@@ -93,7 +98,14 @@ sb.auth.onAuthStateChange((_event, session) => {
   if (session?.user) {
     el.textContent = "Logged in as: " + session.user.email;
   } else {
-    el.textContent = "Not logged in";
-  }
+    el.textContent = "You have successfully logged out.";
+    currentUser = null;
+    localStorage.removeItem("nsb_stats");
 
+    // Optional: change to "Not logged in" after 3 seconds
+    setTimeout(() => {
+      el.textContent = "Not logged in";
+    }, 3000);
+  }
 });
+
