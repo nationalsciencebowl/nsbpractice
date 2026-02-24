@@ -122,6 +122,16 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 11px; color: var(--muted); letter-spacing: 1px;
     }
+    .q-type-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px; margin-left: auto;
+    }
+    .q-type-badge.mc { border: 1px solid var(--yellow); color: var(--yellow); }
+    .q-type-badge.sa { border: 1px solid var(--green);  color: var(--green); }
+    .choice-word {
+      color: var(--yellow); font-weight: 600;
+    }
 
     /* The question text area */
     .question-text {
@@ -499,6 +509,7 @@
       <div class="q-meta">
         <span class="q-badge">TOSS-UP</span>
         <span class="q-subject" id="q-subject">—</span>
+        <span class="q-type-badge" id="q-type">—</span>
       </div>
       <div class="question-text" id="question-text"></div>
       <div class="reading-progress" id="reading-progress"></div>
@@ -632,16 +643,42 @@ function nextQuestion() {
 
   const q = currentQ.tossup;
   document.getElementById('q-subject').textContent = q.subject;
+  document.getElementById('q-type').textContent    = q.type === 'Multiple Choice' ? 'MC' : 'SA';
+  document.getElementById('q-type').className      = 'q-type-badge ' + (q.type === 'Multiple Choice' ? 'mc' : 'sa');
 
-  // Build word spans
-  const words = q.question.split(' ').filter(w => w);
-  totalWords  = words.length;
+  // Build full word list: question + MC options appended
+  const questionWords = q.question.split(' ').filter(w => w);
+  let allWords = [...questionWords];
+  let mcStartIndex = questionWords.length;
+
+  if (q.type === 'Multiple Choice' && q.choices) {
+    ['W', 'X', 'Y', 'Z'].forEach(letter => {
+      if (q.choices[letter]) {
+        allWords.push(letter + ')');
+        allWords.push(...q.choices[letter].split(' ').filter(w => w));
+      }
+    });
+  }
+
+  totalWords = allWords.length;
   const container = document.getElementById('question-text');
   container.innerHTML = '';
 
-  words.forEach((word, i) => {
+  // Add a visual separator before MC options
+  allWords.forEach((word, i) => {
+    // Insert divider span before MC options start
+    if (i === mcStartIndex && q.type === 'Multiple Choice') {
+      const br = document.createElement('div');
+      br.style.cssText = 'height:12px;width:100%';
+      container.appendChild(br);
+    }
     const span = document.createElement('span');
-    span.className = 'word';
+    // Highlight option letters W) X) Y) Z)
+    if (i >= mcStartIndex && /^[WXYZ]\)$/.test(word)) {
+      span.className = 'word choice-word';
+    } else {
+      span.className = 'word';
+    }
     span.textContent = word + ' ';
     span.id = `word-${i}`;
     container.appendChild(span);
@@ -651,7 +688,7 @@ function nextQuestion() {
   const msPerWord = (60 / wpm) * 1000;
   readStart = Date.now();
 
-  words.forEach((_, i) => {
+  allWords.forEach((_, i) => {
     const t = setTimeout(() => {
       const span = document.getElementById(`word-${i}`);
       if (span) span.classList.add('visible');
@@ -661,9 +698,11 @@ function nextQuestion() {
       const pct = ((i + 1) / totalWords) * 100;
       document.getElementById('reading-progress').style.width = pct + '%';
 
-      // All words revealed — reading done
+      // All words revealed — give 2s buffer before auto-fail
       if (i === totalWords - 1) {
-        readingDone();
+        document.getElementById('proctor-status').textContent = 'WAITING FOR BUZZ...';
+        const t = setTimeout(() => readingDone(), 2000);
+        wordTimers.push(t);
       }
     }, i * msPerWord);
     wordTimers.push(t);
