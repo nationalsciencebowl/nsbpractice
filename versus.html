@@ -950,7 +950,7 @@ function renderQuestion(q, isBonus, meta) {
   document.getElementById('q-badge').className = 'q-badge' + (isBonus ? ' bonus-badge' : '');
   document.getElementById('q-subject').textContent = q.subject;
   document.getElementById('q-num').textContent = meta ? `Set ${meta.set} · Q${meta.questionNum}` : '';
-  document.getElementById('question-text').textContent = q.question;
+  renderMath(document.getElementById('question-text'), q.question);
 
   // Reset choices
   const choicesEl = document.getElementById('choices-area');
