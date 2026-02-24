@@ -178,7 +178,13 @@ async function handleSubmit() {
       setTimeout(() => location.href = 'index.html', 800);
     }
   } else {
-    const { error } = await sb.auth.signUp({ email, password });
+    const { error } = await sb.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: 'https://nationalsciencebowl.github.io/nsbpractice/'
+      }
+    });
     if (error) {
       showMsg(error.message, 'error');
       btn.disabled = false;
