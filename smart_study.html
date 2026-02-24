@@ -244,6 +244,14 @@
     .game-screen.show { display: block; }
     #setup-screen.hide { display: none; }
   </style>
+  <!-- MathJax for math rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 </head>
 <body>
 <div class="container">
@@ -511,6 +519,7 @@ function renderQuestion(q, bonusMode) {
   document.getElementById('q-type').textContent   = q.type === 'Multiple Choice' ? 'MC' : 'SA';
   document.getElementById('q-type').className     = 'q-type-tag ' + (q.type === 'Multiple Choice' ? 'mc' : 'sa');
   document.getElementById('question-text').textContent = q.question;
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-text')]);
 
   document.getElementById('feedback').className      = 'feedback';
   document.getElementById('answer-reveal').className = 'answer-reveal';
