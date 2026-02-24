@@ -388,31 +388,37 @@
   </div>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="stats.js"></script>
   <script>
-    // Handle Supabase email confirmation redirect (token in URL hash)
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token')) {
-      const sb = supabase.createClient(
-        'https://uhzyfukvbodiofvcistr.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenlmdWt2Ym9kaW9mdmNpc3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDM3OTUsImV4cCI6MjA4NzM3OTc5NX0.o3IAwdbk-aSZb-kJvSTmHK1H3lsRT4GI-O2jZbZRvPA'
-      );
-      // Supabase automatically picks up the token from the hash
-      sb.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          history.replaceState(null, '', '/nsbpractice/');
-        }
-      });
-    }
+    const _sb = supabase.createClient(
+      'https://uhzyfukvbodiofvcistr.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenlmdWt2Ym9kaW9mdmNpc3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MDM3OTUsImV4cCI6MjA4NzM3OTc5NX0.o3IAwdbk-aSZb-kJvSTmHK1H3lsRT4GI-O2jZbZRvPA'
+    );
 
-    setTimeout(() => {
-      const user = Stats.getUser();
+    // Let Supabase parse the token from URL automatically
+    _sb.auth.getSession();
+
+    // Listen for sign in event (fires when confirmation link is clicked)
+    _sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        // Clean URL and reload to show account badge
+        history.replaceState(null, '', '/nsbpractice/');
+        renderAccountBadge(session.user);
+      }
+    });
+
+    function renderAccountBadge(user) {
       const nav = document.getElementById('account-nav');
       if (!nav) return;
       if (user) {
-        nav.innerHTML = `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px"><span style="color:var(--green)">●</span> ${user.email} · <a href="#" onclick="Stats.signOut().then(()=>location.reload())" style="color:var(--muted);text-decoration:none;">sign out</a></span>`;
+        nav.innerHTML = `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px"><span style="color:var(--green)">●</span> ${user.email} · <a href="#" onclick="_sb.auth.signOut().then(()=>location.reload())" style="color:var(--muted);text-decoration:none;">sign out</a></span>`;
       } else {
         nav.innerHTML = `<a href="auth.html" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);border:1px solid var(--border);padding:6px 14px;border-radius:2px;text-decoration:none;text-transform:uppercase;">Sign In</a>`;
       }
-    }, 600);
+    }
+
+    // Show current session on page load
+    _sb.auth.getSession().then(({ data }) => {
+      renderAccountBadge(data.session ? data.session.user : null);
+    });
   </script>
 </body>
 </html>
