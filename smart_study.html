@@ -553,10 +553,6 @@ function submitSA(q) {
   inp.disabled = true;
   const correct = checkAnswer(val, q);
   inp.className = 'answer-input ' + (correct ? 'correct-input' : 'wrong-input');
-  if (!correct) {
-    document.getElementById('reveal-text').textContent = q.answer;
-    document.getElementById('answer-reveal').classList.add('show');
-  }
   handleResult(correct, q);
 }
 
@@ -576,7 +572,9 @@ function handleResult(correct, q) {
   fb.textContent  = correct ? '✓ Correct!' : '✗ Incorrect.';
   fb.className    = `feedback show ${correct ? 'correct' : 'wrong'}`;
 
-  if (!correct && !isBonus) {
+  // Always show correct answer when wrong
+  if (!correct) {
+    const q = isBonus ? currentQ.bonus : currentQ.tossup;
     document.getElementById('reveal-text').textContent = q.answer;
     document.getElementById('answer-reveal').classList.add('show');
   }
